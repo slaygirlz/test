@@ -1,0 +1,46 @@
+ALSAVOPRO CUSTOM UPDATE
+
+Install
+1. Back up your existing /config/custom_components/alsavopro folder.
+2. Extract this ZIP. Copy its custom_components/alsavopro folder over the
+   existing /config/custom_components/alsavopro folder, replacing files.
+   Do not create an extra nested alsavopro folder.
+3. Restart Home Assistant. Keep the existing integration entry.
+4. Under Settings > Devices & services > AlsavoPro, open the integration
+   entry's three-dot menu and choose Reconfigure.
+5. Edit name, serial number, address, port and password. Leave the password
+   blank to retain it. Saving reloads the integration automatically.
+   Edit serial only to correct this same pump, not to replace it with another.
+   Details are checked for basic validity; connectivity is verified when the
+   integration reloads. If it becomes unavailable, reopen Reconfigure and
+   correct the details.
+
+Thermostat status
+- Power off: Off.
+- Running code 1: Idle.
+- Running code 2: Defrosting (AlsavoCtrl documentation; unconfirmed on your pump).
+- Running code 3: Heating, or Idle if compressor frequency is zero.
+- Running code 4: Cooling, or Idle if compressor frequency is zero.
+- Code 5 and other unknown codes: no activity reported, rather than guessing.
+- Unavailable pump: no activity reported.
+The selected Heat/Cool/Auto mode remains separate from actual activity.
+The separate compressor frequency sensor can remain disabled.
+
+Existing entity and device identities are retained across settings edits.
+All four platforms are unloaded together when the entry reloads.
+
+Validation
+Python compilation, JSON parsing, isolated activity matrix and reconfigure
+behavior checks passed. Tests execute actual methods with framework stand-ins;
+they are not a full Home Assistant test. No live pump or Home Assistant instance
+was available. Verify the card and reconfiguration after installing.
+
+This is a locally modified package, not an upstream release. A subsequent HACS
+update from the original repository may replace these changes. Restore your
+backed-up folder and restart Home Assistant to roll back the code.
+
+Sources
+Base repository commit: ab070cea81125ff4605d2b3bb0160576aaef9dee
+https://github.com/gllmlbrt/AlsavoProHomeAssistantIntegration
+Defrost mapping: https://github.com/strandborg/AlsavoCtrl
+Reconfigure API: https://developers.home-assistant.io/docs/config_entries_config_flow_handler/

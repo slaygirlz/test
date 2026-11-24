@@ -1,0 +1,102 @@
+"""Alsavo Pro pool heat pump integration."""
+import logging
+from datetime import timedelta
+
+import async_timeout
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+)
+
+from homeassistant.const import (
+    CONF_PASSWORD,
+    CONF_IP_ADDRESS,
+    CONF_PORT,
+    CONF_NAME,
+)
+
+from .AlsavoPyCtrl import AlsavoPro
+from .const import (
+    DOMAIN,
+    SERIAL_NO,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup(hass, config):
+    return True
+
+
+async def async_setup_entry(hass, entry):
+    """Set up the Alsavo Pro heater."""
+    name = entry.data.get(CONF_NAME)
+    serial_no = entry.data.get(SERIAL_NO)
+    ip_address = entry.data.get(CONF_IP_ADDRESS)
+    port_no = entry.data.get(CONF_PORT)
+    password = entry.data.get(CONF_PASSWORD)
+
+    data_handler = AlsavoPro(name, serial_no, ip_address, port_no, password)
+    data_handler.entity_identity = entry.data.get("entity_identity", f"{name}_{serial_no}")
+    data_handler.device_identity = entry.data.get("device_identity", serial_no)
+    await data_handler.update()
+    data_coordinator = AlsavoProDataCoordinator(hass, data_handler)
+
+    if DOMAIN not in hass.data:
+        hass.data[DOMAIN] = {}
+    hass.data[DOMAIN][entry.entry_id] = data_coordinator
+
+    await hass.config_entries.async_forward_entry_setups(entry, ['binary_sensor', 'sensor', 'climate', 'number'])
+
+    return True
+
+
+async def async_unload_entry(hass, config_entry):
+    """Unload a config entry."""
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        config_entry, ["binary_sensor", "climate", "sensor", "number"]
+    )
+    if unload_ok:
+        hass.data[DOMAIN].pop(config_entry.entry_id, None)
+    return unload_ok
+
+
+
+class AlsavoProDataCoordinator(DataUpdateCoordinator):
+    def __init__(self, hass, data_handler):
+        """Initialize my coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            # Name of the data. For logging purposes.
+            name="AlsavoPro",
+            # Polling interval. Will only be polled if there are subscribers.
+            update_interval=timedelta(seconds=15),
+        )
+        self.data_handler = data_handler
+
+    async def _async_update_data(self):
+        _LOGGER.debug("_async_update_data")
+        try:
+            async with async_timeout.timeout(10):
+                await self.data_handler.update()
+                return self.data_handler
+        except Exception as ex:
+            _LOGGER.debug("_async_update_data timed out")
+
+
+class AlsavoProEntity:
+    """Mixin providing device_info for Alsavo Pro entities."""
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._data_handler.device_identity)},
+            name=self._data_handler.name,
+            manufacturer="Alsavo/Zealux",
+            model="Swim&Fun 1401/1402",
+            serial_number=str(self._data_handler.serial_no),
+            hw_version=str(self._data_handler.get_status_value(65)),
+            sw_version=str(self._data_handler.get_status_value(66)),
+        )
