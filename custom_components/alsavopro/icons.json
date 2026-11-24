@@ -6,9 +6,9 @@
         "state_attributes": {
           "preset_mode": {
             "state": {
-              "Silent": "mdi:volume-off",
+              "Silent": "mdi:leaf",
               "Smart": "mdi:brain",
-              "Powerful": "mdi:rocket-launch"
+              "Powerful": "mdi:arm-flex"
             }
           }
         }
