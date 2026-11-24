@@ -110,14 +110,8 @@ class AlsavoProClimate(AlsavoProEntity, CoordinatorEntity, ClimateEntity):
 
     @property
     def icon(self):
-        """Return nice icon for heater."""
-        hvac_mode_icons = {
-            HVACMode.HEAT: "mdi:fire",
-            HVACMode.COOL: "mdi:snowflake",
-            HVACMode.AUTO: "mdi:refresh-auto"
-        }
-
-        return hvac_mode_icons.get(self.hvac_mode, "mdi:hvac-off")
+        """Return the pool thermometer icon."""
+        return "mdi:pool-thermometer"
 
     @property
     def hvac_modes(self):
