@@ -72,7 +72,10 @@ class AlsavoProClimate(AlsavoProEntity, CoordinatorEntity, ClimateEntity):
 
     @property
     def hvac_mode(self):
-        """Return hvac operation i.e. heat, cool mode."""
+        """Return the configured HVAC mode while the pump is reachable."""
+        if not self.available:
+            return None
+
         operating_mode_map = {
             0: HVACMode.COOL,
             1: HVACMode.HEAT,
