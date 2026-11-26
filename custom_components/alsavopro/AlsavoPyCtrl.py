@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 import random
@@ -32,10 +33,15 @@ class AlsavoPro:
         try:
             await self._session.connect(self._ip_address, int(self._port_no), int(self._serial_no), self._password)
             data = await self._session.query_all()
-            if data is not None:
-                self._data = data
-                self._online = True
-                self._update_retries = 0
+            if data is None or not data.parts or not data.has_config_value(4):
+                raise ConnectionError("Heat pump response did not include its power and mode settings")
+            self._data = data
+            self._online = True
+            self._update_retries = 0
+        except asyncio.CancelledError:
+            self._online = False
+            self._update_retries = 0
+            raise
         except Exception as e:
             if self._update_retries < MAX_UPDATE_RETRIES:
                 self._update_retries += 1
@@ -50,7 +56,6 @@ class AlsavoPro:
         try:
             await self._session.connect(self._ip_address, int(self._port_no), int(self._serial_no), self._password)
             await self._session.set_config(idx, value)
-            self._online = True
             self._set_retries = 0
         except Exception as e:
             if self._set_retries < MAX_SET_CONFIG_RETRIES:
@@ -335,6 +340,9 @@ class QueryResponse:
             return 0
         else:
             return self.__status.get_value(idx)
+
+    def has_config_value(self, idx: int) -> bool:
+        return self.__config is not None and 0 <= idx - self.__config.startIdx < len(self.__config.data)
 
     def get_config_value(self, idx: int):
         if self.__config is None:
