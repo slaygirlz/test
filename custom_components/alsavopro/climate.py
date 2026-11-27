@@ -28,10 +28,17 @@ from homeassistant.helpers.update_coordinator import (
 from . import AlsavoProDataCoordinator, AlsavoProEntity
 from .const import (
     DOMAIN,
-    POWER_MODE_MAP
+    NO_WATER_FLUX,
+    POWER_MODE_MAP,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+OPERATING_MODES = {
+    0: HVACMode.COOL,
+    1: HVACMode.HEAT,
+    2: HVACMode.AUTO,
+}
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -76,16 +83,23 @@ class AlsavoProClimate(AlsavoProEntity, CoordinatorEntity, ClimateEntity):
         if not self.available:
             return None
 
-        operating_mode_map = {
-            0: HVACMode.COOL,
-            1: HVACMode.HEAT,
-            2: HVACMode.AUTO
-        }
-
         if not self._data_handler.is_power_on:
             return HVACMode.OFF
 
-        return operating_mode_map.get(self._data_handler.operating_mode)
+        return OPERATING_MODES.get(self._data_handler.operating_mode)
+
+    @property
+    def extra_state_attributes(self):
+        """Expose the selected operating mode and any reported fault."""
+        if not self.available:
+            return None
+
+        configured_mode = OPERATING_MODES.get(self._data_handler.operating_mode)
+        fault = self._data_handler.errors.replace(NO_WATER_FLUX, "Waiting for water flow\n")
+        return {
+            "configured_mode": configured_mode.value if configured_mode is not None else None,
+            "fault": fault.strip() or None,
+        }
 
     @property
     def hvac_action(self):
