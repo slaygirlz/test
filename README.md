@@ -37,20 +37,12 @@ Power off overrides this mapping. An unavailable pump does not report activity. 
 
 ## Show the fault inside the thermostat card
 
-The optional AlsavoPro status feature adds a row inside Home Assistant's native thermostat card. It uses the selected mode and fault already reported by the climate entity. If the heat pump shuts down on a water flow fault, the row shows **Off · Waiting for water flow** and the selected mode.
+With AlsavoPro 0.1.3 or newer, the dashboard feature loads automatically.
 
-1. Copy [alsavopro-status-feature.js](dashboard/alsavopro-status-feature.js) to `/config/www/alsavopro-status-feature.js`. If you just created the `www` directory, restart Home Assistant.
-2. Under **Settings → Dashboards → Resources**, add `/local/alsavopro-status-feature.js` as a **JavaScript module**. Enable Advanced Mode in your profile if the Resources menu is hidden.
-3. Edit your existing Thermostat card in the dashboard and add **AlsavoPro heat pump status** under Features. In the YAML editor, you can keep the card's existing settings and append the feature to its `features` list.
+1. Update AlsavoPro and restart Home Assistant. Refresh the dashboard in your browser.
+2. Edit your existing **Pool** thermostat card. Under **Features**, select **Add feature → AlsavoPro heat pump status**, then save.
 
-```yaml
-type: thermostat
-entity: climate.pool
-features:
-  - type: custom:alsavopro-status-feature
-```
-
-Use your existing climate entity ID if it differs from `climate.pool`. If the feature does not appear after adding the resource, reload the dashboard.
+If the heat pump shuts down on a water flow fault, the card shows **Off · Waiting for water flow** and the selected mode beneath the thermostat controls. You can remove the separate Markdown card if you added one earlier.
 
 ## Validation
 
