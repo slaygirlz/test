@@ -1,6 +1,7 @@
 """Alsavo Pro pool heat pump integration."""
 import logging
 from datetime import timedelta
+from pathlib import Path
 
 import async_timeout
 from homeassistant.helpers.entity import DeviceInfo
@@ -25,6 +26,21 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass, config):
+    """Register the bundled thermostat feature when the frontend is enabled."""
+    if "frontend" not in hass.config.components:
+        return True
+
+    from homeassistant.components.frontend import add_extra_js_url
+
+    url = "/alsavopro/alsavopro-status-feature.js"
+    path = str(Path(__file__).with_name("alsavopro-status-feature.js"))
+    if hasattr(hass.http, "async_register_static_paths"):
+        from homeassistant.components.http import StaticPathConfig
+
+        await hass.http.async_register_static_paths([StaticPathConfig(url, path, False)])
+    else:
+        hass.http.register_static_path(url, path, cache_headers=False)
+    add_extra_js_url(hass, url)
     return True
 
 
