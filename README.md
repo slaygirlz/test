@@ -35,35 +35,22 @@ The form checks basic input validity, not whether the pump is reachable. Correct
 
 Power off overrides this mapping. An unavailable pump does not report activity. Codes 1, 3 and 4 were observed on the user's pump; mappings may differ on other models. Auto remains a selectable mode; code 5 is not assumed to indicate actual heating or cooling.
 
-## Show the heat pump status on a dashboard
+## Show the fault inside the thermostat card
 
-The climate entity exposes `configured_mode` and `fault` alongside its normal thermostat state.
-When the unit reports Off with a water flow fault, the example below shows **Off · Waiting for water flow**, followed by the selected mode.
-The heat pump controls its own recovery and the card updates as new readings arrive.
+The optional AlsavoPro status feature adds a row inside Home Assistant's native thermostat card. It uses the selected mode and fault already reported by the climate entity. If the heat pump shuts down on a water flow fault, the row shows **Off · Waiting for water flow** and the selected mode.
 
-In your dashboard, add a **Manual** card and paste this YAML. Replace both instances of
-`climate.pool_heat_pump` with your heat pump's entity ID.
+1. Copy [alsavopro-status-feature.js](dashboard/alsavopro-status-feature.js) to `/config/www/alsavopro-status-feature.js`. If you just created the `www` directory, restart Home Assistant.
+2. Under **Settings → Dashboards → Resources**, add `/local/alsavopro-status-feature.js` as a **JavaScript module**. Enable Advanced Mode in your profile if the Resources menu is hidden.
+3. Edit your existing Thermostat card in the dashboard and add **AlsavoPro heat pump status** under Features. In the YAML editor, you can keep the card's existing settings and append the feature to its `features` list.
 
 ```yaml
-type: vertical-stack
-cards:
-  - type: thermostat
-    entity: climate.pool_heat_pump
-  - type: markdown
-    entity_id: climate.pool_heat_pump
-    content: |
-      {% set pump = config.entity_id %}
-      {% set mode = state_attr(pump, 'configured_mode') %}
-      {% set fault = state_attr(pump, 'fault') %}
-      {% set state = states(pump) %}
-      {% set activity = state_attr(pump, 'hvac_action') %}
-      {% set status = (activity or state) if state in ['heat', 'cool', 'auto'] else state %}
-      **{{ {'heat': 'Heat selected', 'cool': 'Cool selected', 'auto': 'Auto selected'}.get(status, status | capitalize) }}{% if fault and state not in ['unknown', 'unavailable'] %} · {{ fault.splitlines() | join(' · ') }}{% endif %}**
-
-      {% if mode and state not in ['unknown', 'unavailable'] and mode != status %}
-      {{ mode | capitalize }} selected
-      {% endif %}
+type: thermostat
+entity: climate.pool
+features:
+  - type: custom:alsavopro-status-feature
 ```
+
+Use your existing climate entity ID if it differs from `climate.pool`. If the feature does not appear after adding the resource, reload the dashboard.
 
 ## Validation
 
